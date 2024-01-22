@@ -23,8 +23,8 @@ class EndpointSpider(scrapy.Spider):
         link_ext = LinkExtractor(
             allow_domains=self.allow_domains,
             deny_extensions=[],
-            tags=["a", "area", "form", "base", "link", "input"],
-            attrs=["href", "action", "src", "cite"],
+            tags=["a", "audio", "area", "form", "base", "blockquote", "body", "button", "del", "embed", "form",  "frame",  "head", "iframe", "img", "input", "ins", "link", "object", "q", "script", "source", "video"],
+            attrs=["href", "action", "src", "cite", "codebase", "background"],
         )
         links = link_ext.extract_links(response)
 
