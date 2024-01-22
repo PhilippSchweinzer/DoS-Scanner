@@ -1,9 +1,10 @@
 from typing import Any
 
 import scrapy
+from scrapy.http import Response
 from scrapy.linkextractors import LinkExtractor
 
-from dos_scanner.crawler.items import EndpointItem
+from dosscanner.crawler.items import EndpointItem
 
 
 class EndpointSpider(scrapy.Spider):
@@ -14,7 +15,7 @@ class EndpointSpider(scrapy.Spider):
         super(EndpointSpider, self).__init__(*args, **kwargs)
         self.allow_domains = allow_domains
 
-    def parse(self, response):
+    def parse(self, response: Response):
         # Stop crawling if maximum depth is reached
         current_depth = response.meta.get("depth", 0)
         if current_depth >= self.max_depth:
@@ -23,7 +24,31 @@ class EndpointSpider(scrapy.Spider):
         link_ext = LinkExtractor(
             allow_domains=self.allow_domains,
             deny_extensions=[],
-            tags=["a", "audio", "area", "form", "base", "blockquote", "body", "button", "del", "embed", "form",  "frame",  "head", "iframe", "img", "input", "ins", "link", "object", "q", "script", "source", "video"],
+            tags=[
+                "a",
+                "audio",
+                "area",
+                "form",
+                "base",
+                "blockquote",
+                "body",
+                "button",
+                "del",
+                "embed",
+                "form",
+                "frame",
+                "head",
+                "iframe",
+                "img",
+                "input",
+                "ins",
+                "link",
+                "object",
+                "q",
+                "script",
+                "source",
+                "video",
+            ],
             attrs=["href", "action", "src", "cite", "codebase", "background"],
         )
         links = link_ext.extract_links(response)
@@ -32,4 +57,4 @@ class EndpointSpider(scrapy.Spider):
             yield EndpointItem(url=link.url)
 
         for link in links:
-            yield scrapy.Request(url=link.url, callback=self.parse)
+            yield scrapy.Request(url=link.url, callback=self.parse, method="GET")

@@ -1,8 +1,8 @@
 import scrapy
 from scrapy.exceptions import DropItem
 
-from dos_scanner.crawler.items import EndpointItem
-from dos_scanner.database import connection
+from dosscanner.crawler.items import EndpointItem
+from dosscanner.database import connection
 
 
 class EndpointPipeline:

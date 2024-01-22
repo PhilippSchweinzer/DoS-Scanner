@@ -14,10 +14,8 @@ cursor.execute(
 """
 )
 
-# Commit the changes to the database
+# Commit the changes to the database and close the cursor
 connection.commit()
-
-# Close the cursor
 cursor.close()
 
 # Export the connection to be used by other modules
