@@ -2,9 +2,10 @@ from typing import Any
 
 import scrapy
 from scrapy.http import Response
+from scrapy.link import Link
 from scrapy.linkextractors import LinkExtractor
 
-from dosscanner.crawler.items import EndpointItem
+from dosscanner.model import EndpointItem
 
 
 class EndpointSpider(scrapy.Spider):
@@ -16,6 +17,14 @@ class EndpointSpider(scrapy.Spider):
         self.allow_domains = allow_domains
 
     def parse(self, response: Response):
+        """Main logic of crawler. Takes response, resolves it and processes the output
+
+        Args:
+            response (Response): The response being sent and processed
+
+        Yields:
+            An EndpointItem and scrapy.Request object for every link that was found
+        """
         # Stop crawling if maximum depth is reached
         current_depth = response.meta.get("depth", 0)
         if current_depth >= self.max_depth:
@@ -51,10 +60,10 @@ class EndpointSpider(scrapy.Spider):
             ],
             attrs=["href", "action", "src", "cite", "codebase", "background"],
         )
-        links = link_ext.extract_links(response)
+        links: list[Link] = link_ext.extract_links(response)
 
         for link in links:
-            yield EndpointItem(url=link.url)
+            yield EndpointItem(url=link.url, http_method="GET")
 
         for link in links:
             yield scrapy.Request(url=link.url, callback=self.parse, method="GET")
