@@ -10,7 +10,8 @@ cursor.execute(
     CREATE TABLE Endpoint (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         url TEXT NOT NULL,
-        http_method TEXT NOT NULL
+        http_method TEXT NOT NULL,
+        UNIQUE(url, http_method)
     )
 """
 )

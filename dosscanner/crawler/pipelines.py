@@ -24,7 +24,7 @@ class EndpointPipeline:
 
         with connection:
             connection.execute(
-                "INSERT INTO Endpoint ('url', 'http_method') VALUES (?, ?)",
+                "INSERT INTO Endpoint (url, http_method) VALUES (?, ?) ON CONFLICT(url, http_method) DO NOTHING",
                 (item.url, item.http_method),
             )
 
