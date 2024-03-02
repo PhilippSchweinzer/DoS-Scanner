@@ -2,8 +2,8 @@ import math
 
 import requests
 
-from dosscanner.model import EndpointItem
-from dosscanner.statistics.statistics import (
+from dosscanner.model import Endpoint
+from dosscanner.statistics import (
     arithmetic_mean,
     geometric_mean,
     harmonic_mean,
@@ -12,12 +12,12 @@ from dosscanner.statistics.statistics import (
 
 
 def measure_endpoint(
-    endpoint: EndpointItem, count: int = 10, algorithm="arithmetic"
+    endpoint: Endpoint, count: int = 10, algorithm="arithmetic"
 ) -> float:
     """Measures the response time for a specific endpoint by sending multiple requests and calculating a mean response time values from them
 
     Args:
-        endpoint (EndpointItem): Endpoint object which is measured
+        endpoint (Endpoint): Endpoint object which is measured
         count (int, optional): Number of request which are made to calculate the mean value. Defaults to 10.
         algorithm (str, optional): Algorithm to use for mean value calculation. Either "arithmetic", "geometric", "harmonic" or "quadratic". Defaults to "arithmetic".
 
@@ -43,11 +43,11 @@ def measure_endpoint(
         raise NotImplementedError(f"Algorithm {algorithm} not implemented!")
 
 
-def _get_response_time(endpoint: EndpointItem) -> int:
+def _get_response_time(endpoint: Endpoint) -> int:
     """Processes endpoint to get response time in microseconds
 
     Args:
-        endpoint (EndpointItem): Endpoint used for request
+        endpoint (Endpoint): Endpoint used for request
 
     Returns:
         int: Response time in microseconds

@@ -3,12 +3,8 @@ from urllib.parse import parse_qsl, urlencode, urlparse
 
 from typing_extensions import override
 
-from dosscanner.model import EndpointItem
-
-
-class Mutator:
-    def next(self, item: EndpointItem) -> EndpointItem:
-        pass
+from dosscanner.model import Endpoint
+from dosscanner.mutation import Mutator
 
 
 class WordlistMutator(Mutator):
@@ -17,7 +13,7 @@ class WordlistMutator(Mutator):
         self.param_list_path = param_list_path
 
     @override
-    def next(self, item: EndpointItem) -> Iterator[EndpointItem]:
+    def next(self, item: Endpoint) -> Iterator[Endpoint]:
 
         with open(self.wordlist_path, "r") as f:
             wordlist = [line.strip() for line in f.readlines()]
@@ -34,4 +30,8 @@ class WordlistMutator(Mutator):
                     new_query = query.copy()
                     new_query[param] = word
                     new_url = url_parts._replace(query=urlencode(new_query)).geturl()
-                    yield EndpointItem(url=new_url, http_method=item.http_method)
+                    yield Endpoint(url=new_url, http_method=item.http_method)
+
+    @override
+    def feedback(self, data):
+        return super().feedback(data)

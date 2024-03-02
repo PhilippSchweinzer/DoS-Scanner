@@ -1,5 +1,5 @@
-from dosscanner.crawler.spiders import EndpointSpider
-from dosscanner.mutation.mutators import WordlistMutator
+from dosscanner.logger import Logger
+from dosscanner.mutation import WordlistMutator
 from dosscanner.scanner import DoSScanner
 
-__all__ = ["DoSScanner" "EndpointSpider", "WordlistMutator"]
+__all__ = ["DoSScanner", "WordlistMutator", "Logger"]
