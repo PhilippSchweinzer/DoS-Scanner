@@ -12,13 +12,13 @@ from dosscanner.statistics import (
 
 
 def measure_endpoint(
-    endpoint: Endpoint, count: int = 10, algorithm="arithmetic"
+    endpoint: Endpoint, count: int = 5, algorithm="arithmetic"
 ) -> float:
     """Measures the response time for a specific endpoint by sending multiple requests and calculating a mean response time values from them
 
     Args:
         endpoint (Endpoint): Endpoint object which is measured
-        count (int, optional): Number of request which are made to calculate the mean value. Defaults to 10.
+        count (int, optional): Number of request which are made to calculate the mean value. Defaults to 5.
         algorithm (str, optional): Algorithm to use for mean value calculation. Either "arithmetic", "geometric", "harmonic" or "quadratic". Defaults to "arithmetic".
 
     Raises:
