@@ -14,19 +14,18 @@ class DoSScanner:
         self.target = target
         self.mutator = mutator
 
-    def scan_target(self) -> list[str]:
+    def scan_target(self) -> tuple[list[MeasuredEndpoint], list[Endpoint]]:
 
         # Get a list of endpoints by crawling the target
-        Logger.info("Starting crawler...")
+        Logger.info("Crawler started")
         crawler = EndpointCrawler(
             start_urls=[self.target], allowed_domains=[urlparse(self.target).netloc]
         )
-
         endpoints = crawler.crawl()
 
-        Logger.debug(f"{len(endpoints)} unique endpoints were found by the crawler:")
-        for endpoint in endpoints:
-            Logger.debug(f"{endpoint}")
+        Logger.debug(
+            f"{len(endpoints)} unique endpoints were found by the crawler: {endpoints}"
+        )
 
         Logger.info("Mutating endpoints and evaluating DoS score...")
         vulnerable_endpoints = []
@@ -36,9 +35,7 @@ class DoSScanner:
             # Mutate the endpoint until the generating mutator is empty
             for mutated_endpoint in self.mutator.next(endpoint):
                 # Measure the response time of the mutated endpoint
-                Logger.trace(f"Mutated endpoint: {mutated_endpoint}")
                 measured_endpoint = self._measure_endpoint(mutated_endpoint)
-                Logger.trace(f"Measurement for mutated endpoint: {measured_endpoint}")
 
                 # Collect measured endpoint for subsequent calculations
                 measured_endpoints.append(measured_endpoint)
@@ -50,17 +47,23 @@ class DoSScanner:
             cv = coefficient_of_variation(
                 [endpoint.measurement for endpoint in measured_endpoints]
             )
+
             Logger.trace(f"Coefficient of variation = {cv}. Endpoint: {endpoint}")
 
             # Compare coefficient of variation against threshold value
             if cv > 0.6:
-                Logger.debug(f"Found vulnerable endpoint: {endpoint}")
-                vulnerable_endpoints.append(endpoint)
+                # Find mutation with greatest response time
+                max = measured_endpoints[0]
+                for measured_endpoint in measured_endpoints:
+                    if measured_endpoint.measurement > max.measurement:
+                        max = measured_endpoint
+                Logger.debug(f"Found vulnerable endpoint: {max}")
+                vulnerable_endpoints.append(max)
 
-        return vulnerable_endpoints
+        return vulnerable_endpoints, endpoints
 
     def _measure_endpoint(self, endpoint: Endpoint) -> MeasuredEndpoint:
         measurement = measure_endpoint(
-            endpoint=endpoint, count=10, algorithm="arithmetic"
+            endpoint=endpoint, count=5, algorithm="arithmetic"
         )
         return MeasuredEndpoint(endpoint.url, endpoint.http_method, measurement)

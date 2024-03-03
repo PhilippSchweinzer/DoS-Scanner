@@ -15,4 +15,4 @@ class MeasuredEndpoint(Endpoint):
     measurement: float
 
     def __repr__(self) -> str:
-        return super().__repr__() + ("%.2f" % self.measurement)
+        return ("Response time: %.1fμs " % self.measurement) + super().__repr__()
