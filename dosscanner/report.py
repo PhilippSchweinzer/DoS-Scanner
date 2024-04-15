@@ -6,9 +6,9 @@ from dosscanner.model import Endpoint, MeasuredEndpoint
 def create_report(
     vulnerable_endpoints: MeasuredEndpoint, all_endpoints: Endpoint
 ) -> str:
-    report = {"vulnerable": []}
+    report = {"vulnerable_endpoints": []}
     for endpoint in vulnerable_endpoints:
-        report["vulnerable"].append(
+        report["vulnerable_endpoints"].append(
             {
                 "http_method": endpoint.http_method,
                 "url": endpoint.url,
@@ -16,9 +16,9 @@ def create_report(
             }
         )
 
-    report["endpoints"] = []
+    report["crawled_endpoints"] = []
     for endpoint in all_endpoints:
-        report["endpoints"].append(
+        report["crawled_endpoints"].append(
             {"http_method": endpoint.http_method, "url": endpoint.url}
         )
 
