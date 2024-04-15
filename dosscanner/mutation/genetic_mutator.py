@@ -1,0 +1,115 @@
+import copy
+import random
+import string
+from collections.abc import Iterator
+
+from typing_extensions import override
+
+from dosscanner.model import Endpoint, GeneticEndpoint
+from dosscanner.mutation import Mutator
+
+
+class GeneticMutator(Mutator):
+
+    def __init__(self, population_size: int = 10, max_evolutions: int = 10):
+        self.population_size = population_size
+        self.max_evolutions = max_evolutions
+        self.feedback_data = []
+
+    @override
+    def next(self, item: Endpoint) -> Iterator[Endpoint]:
+        # Reset feedback data
+        self.feedback_data = []
+
+        # Yield the original item to measure it and create a baseline reading
+        yield item
+
+        # Create initial population
+        population = []
+        initial_measurement = self.feedback_data[0].measurement
+        for _ in range(self.population_size):
+            population.append(
+                GeneticEndpoint(
+                    url=item.url,
+                    http_method=item.http_method,
+                    measurement=initial_measurement,
+                    parent=None,
+                )
+            )
+
+        for evolution in range(self.max_evolutions):
+            # Reset feedback data
+            self.feedback_data = []
+
+            # Mutate population
+            for pop in population:
+                yield self._mutate(pop)
+
+            # Evaluate fitness
+            # This step is done in the scanner implementation
+
+            # Create new generation by selecting viable parents
+            population = self._select_parents(self.feedback_data)
+
+    @override
+    def feedback(self, endpoint: Endpoint, measurement: int):
+        if measurement is None:
+            endpoint.measurement = -1
+        else:
+            endpoint.measurement = measurement
+        self.feedback_data.append(endpoint)
+
+    def _select_parents(
+        self, endpoints: list[GeneticEndpoint]
+    ) -> list[GeneticEndpoint]:
+
+        # Sort by greatest improvement in response time compared to the parent
+        sorted_by_measurement_diff = sorted(
+            endpoints, key=lambda e: e.measurement - e.parent.measurement, reverse=True
+        )
+
+        # Calculate the bias weights for randomly choosing from the list
+        weights = [1 / (i + 1) for i in range(self.population_size)]
+        # Using biased randomness favoring parents with greater time improvement to choose a new population
+        parents = random.choices(
+            sorted_by_measurement_diff, weights, k=self.population_size
+        )
+        return parents
+
+    def _mutate(self, endpoint: GeneticEndpoint) -> GeneticEndpoint:
+        params = endpoint.get_url_params()
+
+        if len(params) == 0:
+            return endpoint
+
+        chosen_param = random.choice(list(params.keys()))
+
+        mutations = [
+            Mutations.add_digit,
+            Mutations.add_character,
+            Mutations.add_special_character,
+        ]
+        params[chosen_param] = random.choice(mutations)(params[chosen_param])
+
+        mutated_endpoint = GeneticEndpoint(
+            url=endpoint.url,
+            http_method=endpoint.http_method,
+            measurement=None,
+            parent=endpoint,
+        )
+        mutated_endpoint.set_url_params(params)
+        return mutated_endpoint
+
+
+class Mutations:
+
+    @staticmethod
+    def add_digit(param: str):
+        return param + str(random.randint(0, 9))
+
+    @staticmethod
+    def add_character(param: str):
+        return param + random.choice(string.ascii_lowercase)
+
+    def add_special_character(param: str):
+        return param + random.choice(".,:;-+_#*~?!/\\<>")

@@ -5,5 +5,5 @@ class Mutator:
     def next(self, item: Endpoint) -> Endpoint:
         pass
 
-    def feedback(self, data):
+    def feedback(self, endpoint: Endpoint, measurement: int):
         pass

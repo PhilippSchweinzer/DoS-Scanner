@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from dosscanner.crawl import EndpointCrawler
 from dosscanner.logger import Logger
 from dosscanner.measure import measure_endpoint
-from dosscanner.model import Endpoint, MeasuredEndpoint
+from dosscanner.model import Endpoint, MeasuredEndpoint, MeasurementException
 from dosscanner.mutation.mutator import Mutator
 from dosscanner.statistics import coefficient_of_variation
 
@@ -27,27 +27,36 @@ class DoSScanner:
             f"{len(endpoints)} unique endpoints were found by the crawler: {endpoints}"
         )
 
+        # Filter only endpoints with parameters
+        endpoints_with_params = [
+            endpoint for endpoint in endpoints if len(endpoint.get_url_params()) > 0
+        ]
+
         Logger.info("Mutating endpoints and evaluating DoS score...")
         vulnerable_endpoints = []
         # Iterate over all endpoints to evaluate them
-        for endpoint in endpoints:
+        for endpoint in endpoints_with_params:
             measured_endpoints = []
             # Mutate the endpoint until the generating mutator is empty
             for mutated_endpoint in self.mutator.next(endpoint):
-                # Measure the response time of the mutated endpoint
-                measured_endpoint = self._measure_endpoint(mutated_endpoint)
+                try:
+                    # Measure the response time of the mutated endpoint
+                    measured_endpoint = self._measure_endpoint(mutated_endpoint)
+                except MeasurementException as exc:
+                    # If measurement fails, send feedback that it failed and keep evaluating others
+                    self.mutator.feedback(mutated_endpoint, None)
+                    continue
 
                 # Collect measured endpoint for subsequent calculations
                 measured_endpoints.append(measured_endpoint)
 
                 # Send measurement feedback back into the mutator to change its behaviour
-                self.mutator.feedback(measured_endpoint.measurement)
+                self.mutator.feedback(mutated_endpoint, measured_endpoint.measurement)
 
             # Calculate the coefficient of variation over all mutated versions of the original endpoint
             cv = coefficient_of_variation(
                 [endpoint.measurement for endpoint in measured_endpoints]
             )
-
             Logger.trace(f"Coefficient of variation = {cv}. Endpoint: {endpoint}")
 
             # Compare coefficient of variation against threshold value

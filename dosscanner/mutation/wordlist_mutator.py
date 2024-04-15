@@ -33,5 +33,5 @@ class WordlistMutator(Mutator):
                     yield Endpoint(url=new_url, http_method=item.http_method)
 
     @override
-    def feedback(self, data):
-        return super().feedback(data)
+    def feedback(self, endpoint: Endpoint, measurement: int):
+        return super().feedback(endpoint, measurement)
