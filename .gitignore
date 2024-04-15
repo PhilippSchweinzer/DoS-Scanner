@@ -161,3 +161,6 @@ cython_debug/
 
 # Exlucde text files
 *.txt
+
+#Exclude output report
+report.json
