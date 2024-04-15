@@ -2,7 +2,7 @@ import math
 
 import requests
 
-from dosscanner.model import Endpoint
+from dosscanner.model import Endpoint, MeasurementException
 from dosscanner.statistics import (
     arithmetic_mean,
     geometric_mean,
@@ -53,5 +53,8 @@ def _get_response_time(endpoint: Endpoint) -> int:
         int: Response time in microseconds
     """
     if endpoint.http_method == "GET":
-        resp = requests.get(endpoint.url)
+        try:
+            resp = requests.get(endpoint.url)
+        except Exception:
+            raise MeasurementException()
         return resp.elapsed.microseconds
