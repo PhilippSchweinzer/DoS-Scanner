@@ -11,9 +11,7 @@ from dosscanner.statistics import (
 )
 
 
-def measure_endpoint(
-    endpoint: Endpoint, count: int = 5, algorithm="arithmetic"
-) -> float:
+def measure_endpoint(endpoint: Endpoint, count: int = 5, algorithm="arithmetic") -> int:
     """Measures the response time for a specific endpoint by sending multiple requests and calculating a mean response time values from them
 
     Args:
@@ -25,22 +23,24 @@ def measure_endpoint(
         NotImplementedError: If unknown algorithm is called
 
     Returns:
-        float: Calculated mean response time
+        int: Calculated mean response time
     """
     # The first response is always cut out, because the response time includes the resolving of python modules
     # This increases the delay of the first response and is thus excluded from the list
     response_times = [_get_response_time(endpoint) for _ in range(count + 1)][1:]
 
     if algorithm == "arithmetic":
-        return arithmetic_mean(response_times)
+        measurement = arithmetic_mean(response_times)
     elif algorithm == "geometric":
-        return geometric_mean(response_times)
+        measurement = geometric_mean(response_times)
     elif algorithm == "harmonic":
-        return harmonic_mean(response_times)
+        measurement = harmonic_mean(response_times)
     elif algorithm == "quadratic":
-        return quadratic_mean(response_times)
+        measurement = quadratic_mean(response_times)
     else:
         raise NotImplementedError(f"Algorithm {algorithm} not implemented!")
+
+    return int(measurement)
 
 
 def _get_response_time(endpoint: Endpoint) -> int:
