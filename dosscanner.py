@@ -7,23 +7,40 @@ from dosscanner.mutation.genetic_mutator import GeneticMutator
 def cmdline_args():
     # Parent parser
     parser = argparse.ArgumentParser(
-        prog="main.py", description="Scan web applications for DoS vulnerabilities"
+        prog="dosscanner.py",
+        description="Scan a target web server to find potential denial of service vulnerabilities.",
+        epilog="This project was developed by Philipp Schweinzer as part of a bachelor's thesis under the supervision of Michael Kirchner.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     # Subparsers for different modes of operation
     subparsers = parser.add_subparsers(
-        help="Mode of operation used during Denial of Service evaluation",
+        help="Mode of operation used during detection of denial of service vulnerabilities",
         required=True,
         dest="mode",
     )
-    genetic_parser = subparsers.add_parser("genetic")
-    wordlist_parser = subparsers.add_parser("wordlist")
+    genetic_parser = subparsers.add_parser(
+        "genetic",
+        description="Uses a genetic algorithm to create variations of the initial http parameters. This mode requires a large amount of requests to produce the best results.",
+    )
+    wordlist_parser = subparsers.add_parser(
+        "wordlist",
+        description="Uses wordlists to create variations of the initial http parameters.",
+    )
+
+    # Argument groups for better visualization
+    specific_args_genetic = genetic_parser.add_argument_group("mode specific arguments")
+    specific_args_wordlist = wordlist_parser.add_argument_group(
+        "mode specific arguments"
+    )
+    general_args_genetic = genetic_parser.add_argument_group("general arguments")
+    general_args_wordlist = wordlist_parser.add_argument_group("general arguments")
 
     # Arguments of genetic subparser
-    genetic_parser.add_argument(
-        "--host", dest="host", required=True, help="Target host"
+    general_args_genetic.add_argument(
+        "-t", "--target", dest="target", required=True, help="Target host"
     )
-    genetic_parser.add_argument(
+    specific_args_genetic.add_argument(
         "-p",
         "--population-size",
         dest="population_size",
@@ -31,23 +48,16 @@ def cmdline_args():
         default=20,
         help="Population size used during the genetic evolution",
     )
-    genetic_parser.add_argument(
+    specific_args_genetic.add_argument(
         "-e",
         "--evolutions",
         dest="evolutions",
         required=False,
         default=5,
-        help="Number of evolutions the genetic algorithm processes",
+        help="Number of evolution cycles the genetic algorithm processes",
     )
-    genetic_parser.add_argument(
-        "-v",
-        dest="verbosity_level",
-        required=False,
-        action="count",
-        default=0,
-        help="Increase output verbosity. Max: -vvv",
-    )
-    genetic_parser.add_argument(
+
+    general_args_genetic.add_argument(
         "-c",
         "--crawl-depth",
         dest="crawl_depth",
@@ -56,25 +66,23 @@ def cmdline_args():
         default=5,
         help="Maximum crawl depth",
     )
-    genetic_parser.add_argument(
+    general_args_genetic.add_argument(
+        "-r",
+        "--rate-limit",
+        dest="rate_limit",
+        required=False,
+        type=int,
+        default=1000,
+        help="Rate limit of requests (Requests per second)",
+    )
+    general_args_genetic.add_argument(
         "-o",
         "--output",
         dest="output",
         required=False,
-        help="Path to write resulting report into file",
+        help="Write resulting report into file specified by this path",
     )
-
-    # Arguments of wordlist subparser
-    wordlist_parser.add_argument(
-        "--host", dest="host", required=True, help="Target host"
-    )
-    wordlist_parser.add_argument(
-        "--wordlist", dest="wordlist", required=True, help="Path to wordlist"
-    )
-    wordlist_parser.add_argument(
-        "--paramlist", dest="paramlist", required=True, help="Path to paramlist"
-    )
-    wordlist_parser.add_argument(
+    general_args_genetic.add_argument(
         "-v",
         dest="verbosity_level",
         required=False,
@@ -82,7 +90,26 @@ def cmdline_args():
         default=0,
         help="Increase output verbosity. Max: -vvv",
     )
-    wordlist_parser.add_argument(
+
+    # Arguments of wordlist subparser
+    general_args_wordlist.add_argument(
+        "-t", "--target", dest="target", required=True, help="Target host"
+    )
+    specific_args_wordlist.add_argument(
+        "-p",
+        "--params",
+        dest="params",
+        required=True,
+        help="Path to wordlist specifying names of HTTP GET parameters which are analyzed",
+    )
+    specific_args_wordlist.add_argument(
+        "-w",
+        "--wordlist",
+        dest="wordlist",
+        required=True,
+        help="Path to wordlist specifying values which are tested on HTTP GET parameters",
+    )
+    general_args_wordlist.add_argument(
         "-c",
         "--crawl-depth",
         dest="crawl_depth",
@@ -91,12 +118,29 @@ def cmdline_args():
         default=3,
         help="Maximum crawl depth",
     )
-    wordlist_parser.add_argument(
+    general_args_wordlist.add_argument(
+        "-r",
+        "--rate-limit",
+        dest="rate_limit",
+        required=False,
+        type=int,
+        default=1000,
+        help="Rate limit of requests (Requests per second)",
+    )
+    general_args_wordlist.add_argument(
         "-o",
         "--output",
         dest="output",
         required=False,
-        help="Path to write resulting report into file",
+        help="Write resulting report into file specified by this path",
+    )
+    general_args_wordlist.add_argument(
+        "-v",
+        dest="verbosity_level",
+        required=False,
+        action="count",
+        default=0,
+        help="Increase output verbosity. Max: -vvv",
     )
 
     # Parse arguments
@@ -114,10 +158,10 @@ def main(args):
             population_size=args.population_size, max_evolutions=args.evolutions
         )
     elif args.mode == "wordlist":
-        mutator = WordlistMutator(args.wordlist, args.paramlist)
+        mutator = WordlistMutator(args.wordlist, args.params)
 
     # Create scanner and start it
-    scanner = DoSScanner(target=args.host, mutator=mutator)
+    scanner = DoSScanner(target=args.target, mutator=mutator)
     vulnerable_endpoints, all_endpoints = scanner.scan_target()
 
     # Create report from list of endpoints given by the scanner
@@ -125,7 +169,8 @@ def main(args):
     if args.output is not None:
         with open(args.output, "w") as f:
             f.write(report)
-    print(report)
+    else:
+        print(report)
 
 
 if __name__ == "__main__":
