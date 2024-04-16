@@ -12,6 +12,7 @@ root_logger.addHandler(handler)
 
 
 class LogLevel(Enum):
+    ERROR = 0
     INFO = 1
     DEBUG = 2
     TRACE = 3
@@ -25,6 +26,10 @@ class Logger:
     def log(message: str, level: LogLevel):
         if level.value <= Logger.verbosity_level:
             root_logger.log(logging.INFO, message)
+
+    @staticmethod
+    def error(message: str):
+        Logger.log(message, LogLevel.ERROR)
 
     @staticmethod
     def info(message: str):
