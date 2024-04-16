@@ -6,7 +6,7 @@ from collections.abc import Iterator
 from typing_extensions import override
 
 from dosscanner.model import Endpoint, GeneticEndpoint
-from dosscanner.mutation import Mutator
+from dosscanner.mutation.mutator import Mutator
 
 
 class GeneticMutator(Mutator):
@@ -17,12 +17,12 @@ class GeneticMutator(Mutator):
         self.feedback_data = []
 
     @override
-    def next(self, item: Endpoint) -> Iterator[Endpoint]:
+    def next(self, item: Endpoint) -> Iterator[tuple[Endpoint, bool]]:
         # Reset feedback data
-        self.feedback_data = []
+        self.feedback_data.clear()
 
         # Yield the original item to measure it and create a baseline reading
-        yield item
+        yield item, True
 
         # Create initial population
         population = []
@@ -40,11 +40,12 @@ class GeneticMutator(Mutator):
         # Iterate over all evolutions
         for _ in range(self.max_evolutions):
             # Reset feedback data
-            self.feedback_data = []
+            self.feedback_data.clear()
 
             # Mutate population
-            for pop in population:
-                yield self._mutate(pop)
+            for pop in population[:-1]:
+                yield self._mutate(pop), False
+            yield self._mutate(population[-1]), True
 
             # Evaluate fitness
             # This step is done in the scanner implementation
@@ -53,11 +54,8 @@ class GeneticMutator(Mutator):
             population = self._select_parents(self.feedback_data)
 
     @override
-    def feedback(self, endpoint: Endpoint, measurement: int):
-        if measurement is None:
-            endpoint.measurement = -1
-        else:
-            endpoint.measurement = measurement
+    def feedback(self, endpoint: GeneticEndpoint, measurement: int):
+        endpoint.measurement = measurement
         self.feedback_data.append(endpoint)
 
     def _select_parents(
@@ -71,7 +69,6 @@ class GeneticMutator(Mutator):
         Returns:
             list[GeneticEndpoint]: Selected parents viable for further evolution
         """
-
         # Sort by greatest improvement in response time compared to the parent
         sorted_by_measurement_diff = sorted(
             population, key=lambda e: e.measurement - e.parent.measurement, reverse=True
