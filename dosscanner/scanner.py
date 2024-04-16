@@ -6,6 +6,7 @@ from dosscanner.logger import Logger
 from dosscanner.measure import measure_endpoint
 from dosscanner.model import Endpoint, MeasuredEndpoint, MeasurementException
 from dosscanner.mutation.mutator import Mutator
+from dosscanner.request import Requestor
 from dosscanner.statistics import coefficient_of_variation
 
 
@@ -38,20 +39,25 @@ class DoSScanner:
         for endpoint in endpoints_with_params:
             measured_endpoints = []
             # Mutate the endpoint until the generating mutator is empty
-            for mutated_endpoint in self.mutator.next(endpoint):
-                try:
-                    # Measure the response time of the mutated endpoint
-                    measured_endpoint = self._measure_endpoint(mutated_endpoint)
-                except MeasurementException as exc:
-                    # If measurement fails, send feedback that it failed and keep evaluating others
-                    self.mutator.feedback(mutated_endpoint, None)
-                    continue
+            for mutated_endpoint, batch_end in self.mutator.next(endpoint):
 
-                # Collect measured endpoint for subsequent calculations
-                measured_endpoints.append(measured_endpoint)
+                # Add mutation to requests queue
+                Requestor.enqueue(mutated_endpoint)
 
-                # Send measurement feedback back into the mutator to change its behaviour
-                self.mutator.feedback(mutated_endpoint, measured_endpoint.measurement)
+                # If the current batch has ended, measure all collected endpoints and
+                # send feedback to the mutator
+                if batch_end:
+                    batch = Requestor.queue.copy()
+                    measurements = Requestor.evaluate()
+                    for endpoint, measurement in zip(batch, measurements):
+                        self.mutator.feedback(endpoint, measurement)
+                        measured_endpoints.append(
+                            MeasuredEndpoint(
+                                url=endpoint.url,
+                                http_method=endpoint.http_method,
+                                measurement=measurement,
+                            )
+                        )
 
             # Calculate the coefficient of variation over all mutated versions of the original endpoint
             cv = coefficient_of_variation(
