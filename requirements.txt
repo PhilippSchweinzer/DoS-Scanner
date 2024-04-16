@@ -1,1 +1,5 @@
-Scrapy
+typing_extensions
+bs4
+requests
+numpy
+ratelimit
