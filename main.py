@@ -64,6 +64,7 @@ def cmdline_args():
         help="Path to write resulting report into file",
     )
 
+    # Arguments of wordlist subparser
     wordlist_parser.add_argument(
         "--host", dest="host", required=True, help="Target host"
     )

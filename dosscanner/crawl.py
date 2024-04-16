@@ -77,7 +77,6 @@ class EndpointCrawler:
         attrs = ["href", "action", "src", "cite", "codebase", "background"]
 
         for link in soup.find_all(tags):
-            # print(link)
             for attr, value in link.attrs.items():
                 if attr in attrs:
                     urls.append(value)
