@@ -1,5 +1,3 @@
-import math
-
 import requests
 
 from dosscanner.model import Endpoint, MeasurementException
