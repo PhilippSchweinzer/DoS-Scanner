@@ -12,7 +12,7 @@ def create_report(
             {
                 "http_method": endpoint.http_method,
                 "url": endpoint.url,
-                "response_time": "%.1f" % endpoint.measurement,
+                "response_time": endpoint.measurement,
             }
         )
 
