@@ -1,7 +1,7 @@
 import random
 import string
 from collections.abc import Iterator
-from copy import copy, deepcopy
+from copy import deepcopy
 
 from typing_extensions import override
 

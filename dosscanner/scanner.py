@@ -1,10 +1,8 @@
-import sys
 from urllib.parse import urlparse
 
 from dosscanner.crawl import EndpointCrawler
 from dosscanner.logger import Logger
-from dosscanner.measure import measure_endpoint
-from dosscanner.model import Endpoint, MeasuredEndpoint, MeasurementException
+from dosscanner.model import Endpoint, MeasuredEndpoint
 from dosscanner.mutation.mutator import Mutator
 from dosscanner.request import Requestor
 from dosscanner.statistics import coefficient_of_variation

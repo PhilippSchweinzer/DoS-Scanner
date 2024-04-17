@@ -1,8 +1,6 @@
 from urllib.parse import urljoin, urlparse
 
-import requests
 from bs4 import BeautifulSoup
-from requests import RequestException
 
 from dosscanner.model import Endpoint
 from dosscanner.request import Requestor
