@@ -5,26 +5,27 @@ from bs4 import BeautifulSoup
 from requests import RequestException
 
 from dosscanner.model import Endpoint
+from dosscanner.request import Requestor
 
 
 class EndpointCrawler:
-    def __init__(self, start_urls: list[str], allowed_domains: list[str]) -> None:
+    def __init__(self, start_urls: list[Endpoint], allowed_domains: list[str]) -> None:
         self.allowed_domains = allowed_domains
         self.visited = set()
-        self.queue = start_urls
+        self.start_urls = start_urls
 
     def crawl(self) -> list[Endpoint]:
-        while len(self.queue) != 0:
-            url = self.queue.pop(0)
 
-            if url in self.visited:
-                continue
+        for start_url in self.start_urls:
+            Requestor.enqueue(start_url)
+            self.visited.add(start_url.url)
 
-            try:
-                resp = requests.get(url)
-                parsed_urls = self.parse(resp.text)
+        while len(Requestor.queue) > 0:
+            response_data_list = Requestor.evaluate_response_body()
+            for response_data in response_data_list:
+                parsed_urls = self.parse(response_data.body)
                 # Convert URLs to absolute form
-                parsed_urls = [urljoin(resp.url, url) for url in parsed_urls]
+                parsed_urls = [urljoin(response_data.url, url) for url in parsed_urls]
 
                 # Filter URLs by allowed domains
                 filtered_urls = list(
@@ -33,13 +34,15 @@ class EndpointCrawler:
                         parsed_urls,
                     )
                 )
-                self.queue.extend(filtered_urls)
-            except RequestException as exc:
-                pass
 
-            self.visited.add(url)
+                # Add non-visited urls to the Requestor queue
+                for filtered_url in filtered_urls:
+                    if filtered_url not in self.visited:
+                        Requestor.enqueue(Endpoint(url=filtered_url, http_method="GET"))
+                        self.visited.add(filtered_url)
 
         endpoints = []
+        print(self.visited)
         for url in self.visited:
             endpoints.append(Endpoint(url=url, http_method="GET"))
 
