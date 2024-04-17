@@ -20,7 +20,8 @@ class DoSScanner:
         # Get a list of endpoints by crawling the target
         Logger.info("Crawler started")
         crawler = EndpointCrawler(
-            start_urls=[self.target], allowed_domains=[urlparse(self.target).netloc]
+            start_urls=[Endpoint(url=self.target, http_method="GET")],
+            allowed_domains=[urlparse(self.target).netloc],
         )
         endpoints = crawler.crawl()
 
@@ -48,7 +49,7 @@ class DoSScanner:
                 # send feedback to the mutator
                 if batch_end:
                     batch = Requestor.queue.copy()
-                    measurements = Requestor.evaluate()
+                    measurements = Requestor.evaluate_response_time()
                     for endpoint, measurement in zip(batch, measurements):
                         self.mutator.feedback(endpoint, measurement)
                         measured_endpoints.append(
@@ -76,9 +77,3 @@ class DoSScanner:
                 vulnerable_endpoints.append(max)
 
         return vulnerable_endpoints, endpoints
-
-    def _measure_endpoint(self, endpoint: Endpoint) -> MeasuredEndpoint:
-        measurement = measure_endpoint(
-            endpoint=endpoint, count=5, algorithm="arithmetic"
-        )
-        return MeasuredEndpoint(endpoint.url, endpoint.http_method, measurement)
