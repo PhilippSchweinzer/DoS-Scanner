@@ -1,6 +1,6 @@
 import argparse
 
-from dosscanner import DoSScanner, Logger, WordlistMutator, create_report
+from dosscanner import DoSScanner, Logger, Requestor, WordlistMutator, create_report
 from dosscanner.mutation.genetic_mutator import GeneticMutator
 
 
@@ -37,9 +37,6 @@ def cmdline_args():
     general_args_wordlist = wordlist_parser.add_argument_group("general arguments")
 
     # Arguments of genetic subparser
-    general_args_genetic.add_argument(
-        "-t", "--target", dest="target", required=True, help="Target host"
-    )
     specific_args_genetic.add_argument(
         "-p",
         "--population-size",
@@ -58,6 +55,9 @@ def cmdline_args():
     )
 
     general_args_genetic.add_argument(
+        "-t", "--target", dest="target", required=True, help="Target host"
+    )
+    general_args_genetic.add_argument(
         "-c",
         "--crawl-depth",
         dest="crawl_depth",
@@ -74,6 +74,29 @@ def cmdline_args():
         type=int,
         default=1000,
         help="Rate limit of requests (Requests per second)",
+    )
+    general_args_genetic.add_argument(
+        "-H",
+        "--headers",
+        dest="headers",
+        nargs="+",
+        required=False,
+        help='Additionaly headers included in every request (Multiple headers: -H "Header1: Value1" "Header2: Value2")',
+    )
+    general_args_genetic.add_argument(
+        "-n",
+        "--no-cert-validation",
+        dest="no_cert_validation",
+        action="store_true",
+        required=False,
+        help="Disables certificate validation for requests",
+    )
+    general_args_genetic.add_argument(
+        "-P",
+        "--proxy",
+        dest="proxy",
+        required=False,
+        help="Sends every request through the specified proxy",
     )
     general_args_genetic.add_argument(
         "-o",
@@ -127,6 +150,29 @@ def cmdline_args():
         default=1000,
         help="Rate limit of requests (Requests per second)",
     )
+    general_args_genetic.add_argument(
+        "-H",
+        "--headers",
+        dest="headers",
+        nargs="+",
+        required=False,
+        help='Additionaly headers included in every request (Multiple headers: -H "Header1: Value1" "Header2: Value2")',
+    )
+    general_args_genetic.add_argument(
+        "-n",
+        "--no-cert-validation",
+        dest="no_cert_validation",
+        action="store_true",
+        required=False,
+        help="Disables certificate validation for requests",
+    )
+    general_args_genetic.add_argument(
+        "-P",
+        "--proxy",
+        dest="proxy",
+        required=False,
+        help="Sends every request through the specified proxy",
+    )
     general_args_wordlist.add_argument(
         "-o",
         "--output",
@@ -151,6 +197,20 @@ def main(args):
 
     # Set logging verbosity level
     Logger.verbosity_level = args.verbosity_level
+
+    # Set header values of Requestor
+    for header in args.headers:
+        key, value = header.split(": ", maxsplit=1)
+        Requestor.headers[key] = value
+
+    # Set flag for certificate validation
+    if args.no_cert_validation:
+        Requestor.certificate_validation = False
+
+    # Set proxy settings of Requestor
+    if args.proxy is not None:
+        Requestor.proxies["http"] = args.proxy
+        Requestor.proxies["https"] = args.proxy
 
     # Create specified mutator from command line args
     if args.mode == "genetic":
