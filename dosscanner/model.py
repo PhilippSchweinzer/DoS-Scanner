@@ -33,4 +33,12 @@ class MeasuredEndpoint(Endpoint):
 
 @dataclass
 class GeneticEndpoint(MeasuredEndpoint):
-    parent: "GeneticEndpoint"
+    mutated_param_key: str
+
+    def get_mutated_param_value(self) -> str:
+        return self.get_url_params()[self.mutated_param_key]
+
+    def set_mutated_param_value(self, value: str) -> str:
+        params = self.get_url_params()
+        params[self.mutated_param_key] = value
+        self.set_url_params(params)
