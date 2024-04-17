@@ -162,7 +162,7 @@ class GeneticMutator(Mutator):
             Mutations.add_lowercase_character,
             Mutations.add_uppercase_character,
             Mutations.add_special_character,
-            # Mutations.add_copy,
+            Mutations.add_copy,
             Mutations.remove_last_character,
         ]
         params = endpoint.get_url_params()

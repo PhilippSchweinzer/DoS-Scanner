@@ -13,13 +13,18 @@ class EndpointCrawler:
         self.start_urls = start_urls
 
     def crawl(self) -> list[Endpoint]:
+        """Starts the crawling process and generates a list of all endpoints which are found.
 
+
+        Returns:
+            list[Endpoint]: All endpoints which were found during the crawler process
+        """
         for start_url in self.start_urls:
             Requestor.enqueue(start_url)
             self.visited.add(start_url.url)
 
         while len(Requestor.queue) > 0:
-            response_data_list = Requestor.evaluate_response_body()
+            response_data_list = Requestor.evaluate_response_data()
             for response_data in response_data_list:
                 parsed_urls = self.parse(response_data.body)
                 # Convert URLs to absolute form
@@ -47,6 +52,14 @@ class EndpointCrawler:
         return endpoints
 
     def parse(self, data: str) -> list[str]:
+        """Parses the response body of an http call and searches for endpoints
+
+        Args:
+            data (str): Response body in which endpoints are searched
+
+        Returns:
+            list[str]: All found endpoints
+        """
         urls = []
         soup = BeautifulSoup(data, "html.parser")
 

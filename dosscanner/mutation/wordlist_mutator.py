@@ -15,6 +15,15 @@ class WordlistMutator(Mutator):
 
     @override
     def next(self, item: Endpoint) -> Iterator[tuple[Endpoint, bool]]:
+        """Uses the item and mutates it by changing the parameter values according
+           to the specified wordlist
+
+        Args:
+            item (Endpoint): Endpoint which is mutated
+
+        Yields:
+            Iterator[tuple[Endpoint, bool]]: All mutations generated
+        """
 
         # Counter to track how many elements were yielded
         yield_counter = 0
@@ -48,4 +57,11 @@ class WordlistMutator(Mutator):
 
     @override
     def feedback(self, endpoint: Endpoint, measurement: int):
+        """This mutator does not need feedback values.
+           Does nothing and calls super implementation.
+
+        Args:
+            endpoint (Endpoint): Endpoint of which the feedback is given
+            measurement (int): Feedback value representing the response time of the endpoint
+        """
         return super().feedback(endpoint, measurement)

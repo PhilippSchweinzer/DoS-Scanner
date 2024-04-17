@@ -14,6 +14,11 @@ class DoSScanner:
         self.mutator = mutator
 
     def scan_target(self) -> tuple[list[MeasuredEndpoint], list[Endpoint]]:
+        """Scans target for denial of service vulnerabilities
+
+        Returns:
+            tuple[list[MeasuredEndpoint], list[Endpoint]]: Result of scan
+        """
 
         # Get a list of endpoints by crawling the target
         Logger.info("Crawler started")

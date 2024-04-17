@@ -4,8 +4,17 @@ from dosscanner.model import Endpoint, MeasuredEndpoint
 
 
 def create_report(
-    vulnerable_endpoints: MeasuredEndpoint, all_endpoints: Endpoint
+    vulnerable_endpoints: list[MeasuredEndpoint], all_endpoints: list[Endpoint]
 ) -> str:
+    """Creates a json report of the findings in string form.
+
+    Args:
+        vulnerable_endpoints (list[MeasuredEndpoint]): All vulnerable endpoints which were found
+        all_endpoints (list[Endpoint]): All endpoints which were found
+
+    Returns:
+        str: String representation of the resulting report
+    """
     report = {"vulnerable_endpoints": []}
     for endpoint in vulnerable_endpoints:
         report["vulnerable_endpoints"].append(

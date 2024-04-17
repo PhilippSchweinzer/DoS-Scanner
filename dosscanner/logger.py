@@ -2,6 +2,7 @@ import logging
 import sys
 from enum import Enum
 
+# Setup logging configuration
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
