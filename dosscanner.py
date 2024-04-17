@@ -150,7 +150,7 @@ def cmdline_args():
         default=1000,
         help="Rate limit of requests (Requests per second)",
     )
-    general_args_genetic.add_argument(
+    general_args_wordlist.add_argument(
         "-H",
         "--headers",
         dest="headers",
@@ -158,7 +158,7 @@ def cmdline_args():
         required=False,
         help='Additionaly headers included in every request (Multiple headers: -H "Header1: Value1" "Header2: Value2")',
     )
-    general_args_genetic.add_argument(
+    general_args_wordlist.add_argument(
         "-n",
         "--no-cert-validation",
         dest="no_cert_validation",
@@ -166,7 +166,7 @@ def cmdline_args():
         required=False,
         help="Disables certificate validation for requests",
     )
-    general_args_genetic.add_argument(
+    general_args_wordlist.add_argument(
         "-P",
         "--proxy",
         dest="proxy",
