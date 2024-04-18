@@ -82,6 +82,7 @@ class EndpointCrawler:
         urls = []
         soup = BeautifulSoup(data, "html.parser")
 
+        # List of all html tags which are able to contain attributes with urls
         tags = [
             "a",
             "audio",
@@ -107,6 +108,7 @@ class EndpointCrawler:
             "source",
             "video",
         ]
+        # Attributes of html tags which are able to hold urls on their own
         attrs = ["href", "action", "src", "cite", "codebase", "background"]
 
         for link in soup.find_all(tags):
