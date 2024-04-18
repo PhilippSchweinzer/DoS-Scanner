@@ -56,7 +56,6 @@ class GeneticMutator(Mutator):
                 for pop in population:
                     if random.random() < 0.3:
                         self._mutate(pop)
-                        print(pop)
 
                 # Evaluate fitness
                 for pop in population[:-1]:

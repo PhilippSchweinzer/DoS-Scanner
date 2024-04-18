@@ -41,7 +41,7 @@ def measure_endpoint(endpoint: Endpoint, count: int = 5, algorithm="arithmetic")
     return int(measurement)
 
 
-def _get_response_time(endpoint: Endpoint) -> int:
+def _get_response_time(endpoint: Endpoint) -> int | None:
     """Processes endpoint to get response time in microseconds
 
     Args:

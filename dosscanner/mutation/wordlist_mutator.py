@@ -32,23 +32,27 @@ class WordlistMutator(Mutator):
         yield item, False
         yield_counter += 1
 
+        # Read values from both wordlists
         with open(self.wordlist_path, "r") as f:
             wordlist = [line.strip() for line in f.readlines()]
-
         with open(self.param_list_path, "r") as f:
             param_list = [line.strip() for line in f.readlines()]
 
+        # Parse paremters from URL
         url_parts = urlparse(item.url)
         query = dict(parse_qsl(url_parts.query))
 
+        # Iterate over all parameters and check if they should be tested
         for param in query.keys():
             if param in param_list:
+                # Yield Endpoint object for every value which should be tested
                 for word in wordlist:
                     new_query = query.copy()
                     new_query[param] = word
                     new_url = url_parts._replace(query=urlencode(new_query)).geturl()
                     yield_counter += 1
-                    if yield_counter == 100:
+                    # End batch at maximum size to process all endpoints in batches
+                    if yield_counter == 200:
                         batch_end = True
                         yield_counter = 0
                     else:

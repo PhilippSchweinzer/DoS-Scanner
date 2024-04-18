@@ -1,6 +1,8 @@
 import argparse
 
 from dosscanner import DoSScanner, Logger, Requestor, WordlistMutator, create_report
+from dosscanner.logger import LogLevel
+from dosscanner.model import Endpoint
 from dosscanner.mutation.genetic_mutator import GeneticMutator
 
 
@@ -9,8 +11,7 @@ def cmdline_args():
     parser = argparse.ArgumentParser(
         prog="dosscanner.py",
         description="Scan a target web server to find potential denial of service vulnerabilities.",
-        epilog="This project was developed by Philipp Schweinzer as part of a bachelor's thesis under the supervision of Michael Kirchner.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog="This project was developed by Philipp Schweinzer as part of a bachelor thesis under the supervision of Michael Kirchner.",
     )
 
     # Subparsers for different modes of operation
@@ -42,16 +43,18 @@ def cmdline_args():
         "--population-size",
         dest="population_size",
         required=False,
+        type=int,
         default=20,
-        help="Population size used during the genetic evolution",
+        help="Population size used during the genetic evolution. (Default: %(default)d)",
     )
     specific_args_genetic.add_argument(
         "-e",
         "--evolutions",
         dest="evolutions",
         required=False,
+        type=int,
         default=5,
-        help="Number of evolution cycles the genetic algorithm processes",
+        help="Number of evolution cycles the genetic algorithm processes. (Default: %(default)d)",
     )
 
     general_args_genetic.add_argument(
@@ -64,7 +67,7 @@ def cmdline_args():
         required=False,
         type=int,
         default=5,
-        help="Maximum crawl depth",
+        help="Maximum crawl depth. (Default: %(default)d)",
     )
     general_args_genetic.add_argument(
         "-r",
@@ -72,8 +75,8 @@ def cmdline_args():
         dest="rate_limit",
         required=False,
         type=int,
-        default=1000,
-        help="Rate limit of requests (Requests per second)",
+        default=10000,
+        help="Rate limit specified in requests per second. (Default: %(default)d)",
     )
     general_args_genetic.add_argument(
         "-H",
@@ -138,8 +141,8 @@ def cmdline_args():
         dest="crawl_depth",
         required=False,
         type=int,
-        default=3,
-        help="Maximum crawl depth",
+        default=5,
+        help="Maximum crawl depth. (Default: %(default)d)",
     )
     general_args_wordlist.add_argument(
         "-r",
@@ -147,8 +150,8 @@ def cmdline_args():
         dest="rate_limit",
         required=False,
         type=int,
-        default=1000,
-        help="Rate limit of requests (Requests per second)",
+        default=10000,
+        help="Rate limit specified in requests per second. (Default: %(default)d)",
     )
     general_args_wordlist.add_argument(
         "-H",
@@ -199,9 +202,10 @@ def main(args):
     Logger.verbosity_level = args.verbosity_level
 
     # Set header values of Requestor
-    for header in args.headers:
-        key, value = header.split(": ", maxsplit=1)
-        Requestor.headers[key] = value
+    if args.headers is not None:
+        for header in args.headers:
+            key, value = header.split(": ", maxsplit=1)
+            Requestor.headers[key] = value
 
     # Set flag for certificate validation
     if args.no_cert_validation:
@@ -214,17 +218,31 @@ def main(args):
 
     # Create specified mutator from command line args
     if args.mode == "genetic":
+        Logger.trace("Using genetic mode")
         mutator = GeneticMutator(
             population_size=args.population_size, max_evolutions=args.evolutions
         )
     elif args.mode == "wordlist":
+        Logger.trace("Using wordlist mode")
         mutator = WordlistMutator(args.wordlist, args.params)
 
+    success, message = Requestor.check_connectivity(
+        Endpoint(url=args.target, http_method="GET")
+    )
+    if not success:
+        Logger.error(f"Connectivity test to target server failed! Error: {message}")
+        return
+    else:
+        Logger.trace("Connectivity test to target server succeeded!")
+
     # Create scanner and start it
-    scanner = DoSScanner(target=args.target, mutator=mutator)
+    scanner = DoSScanner(
+        target=args.target, mutator=mutator, crawl_depth=args.crawl_depth
+    )
     vulnerable_endpoints, all_endpoints = scanner.scan_target()
 
     # Create report from list of endpoints given by the scanner
+    Logger.trace("Creating report")
     report = create_report(vulnerable_endpoints, all_endpoints)
     if args.output is not None:
         with open(args.output, "w") as f:
