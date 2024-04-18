@@ -38,26 +38,30 @@ class WordlistMutator(Mutator):
         with open(self.param_list_path, "r") as f:
             param_list = [line.strip() for line in f.readlines()]
 
+        wordlist_length = len(wordlist)
+
         # Parse paremters from URL
-        url_parts = urlparse(item.url)
-        query = dict(parse_qsl(url_parts.query))
+        url_params = item.get_url_params()
 
         # Iterate over all parameters and check if they should be tested
-        for param in query.keys():
+        for param in url_params:
             if param in param_list:
                 # Yield Endpoint object for every value which should be tested
-                for word in wordlist:
-                    new_query = query.copy()
-                    new_query[param] = word
-                    new_url = url_parts._replace(query=urlencode(new_query)).geturl()
+                for idx, word in enumerate(wordlist):
+                    new_url_params = url_params.copy()
+                    new_url_params[param] = word
+                    mutated_endpoint = Endpoint(
+                        url=item.url, http_method=item.http_method
+                    )
+                    mutated_endpoint.set_url_params(new_url_params)
                     yield_counter += 1
-                    # End batch at maximum size to process all endpoints in batches
-                    if yield_counter == 200:
+                    # End batch at maximum size or last element to process all endpoints in batches
+                    if yield_counter == 200 or idx == wordlist_length - 1:
                         batch_end = True
                         yield_counter = 0
                     else:
                         batch_end = False
-                    yield Endpoint(url=new_url, http_method=item.http_method), batch_end
+                    yield mutated_endpoint, batch_end
 
     @override
     def feedback(self, endpoint: Endpoint, measurement: int):
