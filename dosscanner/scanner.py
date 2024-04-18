@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 
+from dosscanner import crawl
 from dosscanner.crawl import EndpointCrawler
 from dosscanner.logger import Logger
 from dosscanner.model import Endpoint, MeasuredEndpoint
@@ -9,9 +10,10 @@ from dosscanner.statistics import coefficient_of_variation
 
 
 class DoSScanner:
-    def __init__(self, target: str, mutator: Mutator) -> None:
+    def __init__(self, target: str, mutator: Mutator, crawl_depth: int) -> None:
         self.target = target
         self.mutator = mutator
+        self.crawl_depth = crawl_depth
 
     def scan_target(self) -> tuple[list[MeasuredEndpoint], list[Endpoint]]:
         """Scans target for denial of service vulnerabilities
@@ -23,14 +25,13 @@ class DoSScanner:
         # Get a list of endpoints by crawling the target
         Logger.info("Crawler started")
         crawler = EndpointCrawler(
-            start_urls=[Endpoint(url=self.target, http_method="GET")],
+            start_url=Endpoint(url=self.target, http_method="GET"),
             allowed_domains=[urlparse(self.target).netloc],
+            max_crawl_depth=self.crawl_depth,
         )
         endpoints = crawler.crawl()
-
-        Logger.debug(
-            f"{len(endpoints)} unique endpoints were found by the crawler: {endpoints}"
-        )
+        Logger.debug(f"{len(endpoints)} unique endpoints were found by the crawler")
+        Logger.trace(f"All endpoints: {endpoints}")
 
         # Filter only endpoints with parameters
         endpoints_with_params = [
@@ -41,9 +42,12 @@ class DoSScanner:
         vulnerable_endpoints = []
         # Iterate over all endpoints to evaluate them
         for endpoint in endpoints_with_params:
+            Logger.debug(f"Mutating endpoint {endpoint}")
             measured_endpoints = []
             # Mutate the endpoint until the generating mutator is empty
             for mutated_endpoint, batch_end in self.mutator.next(endpoint):
+
+                Logger.trace(f"Generated mutation: {mutated_endpoint}")
 
                 # Add mutation to requests queue
                 Requestor.enqueue(mutated_endpoint)
@@ -67,7 +71,9 @@ class DoSScanner:
             cv = coefficient_of_variation(
                 [endpoint.measurement for endpoint in measured_endpoints]
             )
-            Logger.trace(f"Coefficient of variation = {cv}. Endpoint: {endpoint}")
+            Logger.trace(
+                f'Coefficient of variation of endpoint "{endpoint}" was calculated to {cv}'
+            )
 
             # Compare coefficient of variation against threshold value
             if cv > 0.6:
@@ -76,7 +82,7 @@ class DoSScanner:
                 for measured_endpoint in measured_endpoints:
                     if measured_endpoint.measurement > max.measurement:
                         max = measured_endpoint
-                Logger.debug(f"Found vulnerable endpoint: {max}")
+                Logger.info(f"Found vulnerable endpoint: {max}")
                 vulnerable_endpoints.append(max)
 
         return vulnerable_endpoints, endpoints
