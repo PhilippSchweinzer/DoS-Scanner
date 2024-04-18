@@ -27,21 +27,21 @@ python dosscanner.py genetic -h
 The following command line arguments can be configured regardless of the chosen mode. Only the `-t TARGET` flag is required.
 
 ```
-  -t TARGET, --target TARGET
-                        Target host
-  -c CRAWL_DEPTH, --crawl-depth CRAWL_DEPTH
-                        Maximum crawl depth
-  -r RATE_LIMIT, --rate-limit RATE_LIMIT
-                        Rate limit of requests (Requests per second)
-  -H HEADERS [HEADERS ...], --headers HEADERS [HEADERS ...]
-                        Additionaly headers included in every request (Multiple headers: -H "Header1: Value1" "Header2: Value2")
-  -n, --no-cert-validation
-                        Disables certificate validation for requests
-  -P PROXY, --proxy PROXY
-                        Sends every request through the specified proxy
-  -o OUTPUT, --output OUTPUT
-                        Write resulting report into file specified by this path
-  -v                    Increase output verbosity. Max: -vvv
+-t TARGET, --target TARGET
+                    Target host
+-c CRAWL_DEPTH, --crawl-depth CRAWL_DEPTH
+                    Maximum crawl depth. (Default: 5)
+-r RATE_LIMIT, --rate-limit RATE_LIMIT
+                    Rate limit specified in requests per second. (Default: 10000)
+-H HEADERS [HEADERS ...], --headers HEADERS [HEADERS ...]
+                    Additionaly headers included in every request (Multiple headers: -H "Header1: Value1" "Header2: Value2")
+-n, --no-cert-validation
+                    Disables certificate validation for requests
+-P PROXY, --proxy PROXY
+                    Sends every request through the specified proxy
+-o OUTPUT, --output OUTPUT
+                    Write resulting report into file specified by this path
+-v                  Increase output verbosity. Max: -vvv
 ```
 
 ### Wordlist mode
@@ -90,18 +90,24 @@ options:
 
 mode specific arguments:
   -p POPULATION_SIZE, --population-size POPULATION_SIZE
-                        Population size used during the genetic evolution
+                        Population size used during the genetic evolution. (Default: 20)
   -e EVOLUTIONS, --evolutions EVOLUTIONS
-                        Number of evolution cycles the genetic algorithm processes
+                        Number of evolution cycles the genetic algorithm processes. (Default: 5)
 ```
 
 ## Examples
 
-```
+Example usage of a scan against `https://example.target` using genetic mode, a crawl depth of 7, 10 evolution cycles and maximum verbosity:
 
 ```
+python dosscanner.py genetic -t https://example.target -c 7 -e 10 -vvv
+```
 
+Example usage of a scan against `https://example.target` using wordlist mode, without certificate validation and including a proxy:
 
+```
+python dosscanner.py wordlist -t https://example.target -p /path/to/param_list -w /path/to/value_list -n -P "http://127.0.0.1:8080"
+```
 
 
 ## Acknowledgements
