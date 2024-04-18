@@ -27,10 +27,10 @@ def standard_deviation(numbers: list) -> float:
     Returns:
         float: Calculated standard deviation
     """
-    return np.std(numbers)
+    return float(np.std(numbers))
 
 
-def arithmetic_mean(numbers: list) -> float:
+def arithmetic_mean(numbers: list) -> int:
     """Calculates arithmetic mean from list of numbers
 
     Args:
@@ -39,10 +39,10 @@ def arithmetic_mean(numbers: list) -> float:
     Returns:
         float: Calculated mean value
     """
-    return sum(numbers) / len(numbers)
+    return int(np.mean(numbers))
 
 
-def geometric_mean(numbers: list) -> float:
+def geometric_mean(numbers: list) -> int:
     """Calculates geometric mean from list of numbers
 
     Args:
@@ -51,10 +51,10 @@ def geometric_mean(numbers: list) -> float:
     Returns:
         float: Calculated mean value
     """
-    return math.pow(math.prod(numbers), 1 / len(numbers))
+    return int(math.pow(math.prod(numbers), 1 / len(numbers)))
 
 
-def harmonic_mean(numbers: list) -> float:
+def harmonic_mean(numbers: list) -> int:
     """Calculates harmonic mean from list of numbers
 
     Args:
@@ -63,10 +63,10 @@ def harmonic_mean(numbers: list) -> float:
     Returns:
         float: Calculated mean value
     """
-    return len(numbers) / (sum([1 / n for n in numbers]))
+    return int(len(numbers) / (sum([1 / n for n in numbers])))
 
 
-def quadratic_mean(numbers: list) -> float:
+def quadratic_mean(numbers: list) -> int:
     """Calculates quadratic mean from list of numbers
 
     Args:
@@ -75,4 +75,4 @@ def quadratic_mean(numbers: list) -> float:
     Returns:
         float: Calculated mean value
     """
-    return math.sqrt((sum([n**2 for n in numbers]) / len(numbers)))
+    return int(math.sqrt((sum([n**2 for n in numbers]) / len(numbers))))
