@@ -14,6 +14,11 @@ class Endpoint:
     def __repr__(self) -> str:
         return self.http_method + " " + self.url
 
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Endpoint):
+            return self.http_method == other.http_method and self.url == other.url
+        return False
+
     def get_url_params(self) -> dict[str, str]:
         """Parses the url and retrieves all url parameters in it
 
@@ -35,7 +40,7 @@ class Endpoint:
 
 @dataclass
 class MeasuredEndpoint(Endpoint):
-    measurement: int
+    measurement: int | None
 
     def __repr__(self) -> str:
         return (f"Response time: {self.measurement}μs ") + super().__repr__()
@@ -44,6 +49,9 @@ class MeasuredEndpoint(Endpoint):
 @dataclass
 class GeneticEndpoint(MeasuredEndpoint):
     mutated_param_key: str  # Tracks the url parameter key which is mutated
+
+    def __repr__(self) -> str:
+        return self.http_method + " " + self.url
 
     def get_mutated_param_value(self) -> str:
         """Retrieves value of the parameter which is currently being mutated
