@@ -6,6 +6,7 @@ import requests
 from ratelimit import limits, sleep_and_retry
 from requests.exceptions import Timeout
 
+from dosscanner.logger import Logger
 from dosscanner.model import Endpoint
 from dosscanner.statistics import arithmetic_mean
 
@@ -13,7 +14,7 @@ from dosscanner.statistics import arithmetic_mean
 @dataclass
 class ResponseData:
     body: str
-    url: str
+    endpoint: Endpoint
 
 
 class Requestor:
@@ -35,7 +36,31 @@ class Requestor:
         Requestor.queue.append(endpoint)
 
     @staticmethod
-    def evaluate_response_data() -> list[ResponseData]:
+    def enqueue_all(endpoints: list[Endpoint]) -> None:
+        """Adds a list of endpoints to queue to wait for batched execution
+
+        Args:
+            endpoints (list[Endpoint]): Endpoints which are added to queue
+        """
+        Requestor.queue.extend(endpoints)
+
+    @staticmethod
+    def check_connectivity(endpoint: Endpoint) -> tuple[bool, str]:
+        try:
+            requests.get(
+                endpoint.url,
+                headers=Requestor.headers,
+                timeout=10,
+                proxies=Requestor.proxies,
+                verify=Requestor.certificate_validation,
+            )
+        except Exception as exc:
+            return False, str(exc)
+
+        return True, ""
+
+    @staticmethod
+    def evaluate_response_data() -> list[ResponseData | None]:
         """Evaluates the current queue by iterating over all endpoints in it.
            Saves the response body and original url of it.
 
@@ -45,7 +70,7 @@ class Requestor:
 
         @sleep_and_retry
         @limits(calls=Requestor.rate_limit, period=1)
-        def get_response_data(url: str) -> ResponseData:
+        def get_response_data(url: str) -> ResponseData | None:
             """Sends http request and extracts information from response
 
             Args:
@@ -54,7 +79,6 @@ class Requestor:
             Returns:
                 ResponseData: Information about http response
             """
-            print(url)
             try:
                 resp = requests.get(
                     url,
@@ -64,9 +88,12 @@ class Requestor:
                     verify=Requestor.certificate_validation,
                 )
             except Exception as exc:
-                return ResponseData(body="", url="")
+                return None
 
-            return ResponseData(body=resp.text, url=resp.url)
+            return ResponseData(
+                body=resp.text,
+                endpoint=Endpoint(url=resp.url, http_method=str(resp.request.method)),
+            )
 
         return Requestor._evaluate(get_response_data)
 
@@ -90,17 +117,22 @@ class Requestor:
             Returns:
                 int: Response time in microseconds
             """
+            max_timeout = 120
             try:
                 resp = requests.get(
                     url,
                     headers=Requestor.headers,
-                    timeout=60,
+                    timeout=max_timeout,
                     proxies=Requestor.proxies,
                     verify=Requestor.certificate_validation,
                 )
             except Timeout:
-                return 60 * 1_000_000
+                Logger.info(
+                    f"Server response timeout of {max_timeout} seconds was reached with URL {url}"
+                )
+                return max_timeout * 1_000_000
             except Exception as exc:
+                # If any other exception has occured return a small value and continue
                 return -1
 
             return resp.elapsed.microseconds
