@@ -75,7 +75,7 @@ def cmdline_args():
         dest="rate_limit",
         required=False,
         type=int,
-        default=10000,
+        default=200,
         help="Rate limit specified in requests per second. (Default: %(default)d)",
     )
     general_args_genetic.add_argument(
@@ -150,7 +150,7 @@ def cmdline_args():
         dest="rate_limit",
         required=False,
         type=int,
-        default=10000,
+        default=200,
         help="Rate limit specified in requests per second. (Default: %(default)d)",
     )
     general_args_wordlist.add_argument(
