@@ -51,7 +51,7 @@ def cmdline_args():
         dest="population_size",
         required=False,
         type=int,
-        default=20,
+        default=30,
         help="Population size used during the genetic evolution. (Default: %(default)d)",
     )
     specific_args_genetic.add_argument(
@@ -60,7 +60,7 @@ def cmdline_args():
         dest="evolutions",
         required=False,
         type=int,
-        default=5,
+        default=10,
         help="Number of evolution cycles the genetic algorithm processes. (Default: %(default)d)",
     )
 

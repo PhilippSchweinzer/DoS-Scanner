@@ -11,7 +11,7 @@ from dosscanner.mutation.mutator import Mutator
 
 class GeneticMutator(Mutator):
 
-    def __init__(self, population_size: int = 10, max_evolutions: int = 10):
+    def __init__(self, population_size: int, max_evolutions: int):
         self.population_size = population_size
         self.max_evolutions = max_evolutions
         self.feedback_data = []
@@ -163,6 +163,8 @@ class GeneticMutator(Mutator):
             Mutations.add_special_character,
             Mutations.add_copy,
             Mutations.remove_last_character,
+            Mutations.remove_first_character,
+            Mutations.add_non_printable_character,
         ]
         params = endpoint.get_url_params()
         params[endpoint.mutated_param_key] = random.choice(mutations)(
@@ -193,7 +195,11 @@ class Mutations:
 
     @staticmethod
     def add_special_character(param: str) -> str:
-        return param + random.choice(".,:;-+_#*~?!/\\<>")
+        return param + random.choice(".,:;-+_#*~?!/\\<>&'\"%=@")
+
+    @staticmethod
+    def add_non_printable_character(param: str) -> str:
+        return param + chr(random.randint(0, 32))
 
     @staticmethod
     def add_copy(param: str) -> str:
@@ -203,4 +209,10 @@ class Mutations:
     def remove_last_character(param: str) -> str:
         if len(param) > 1:
             return param[:-1]
+        return param
+
+    @staticmethod
+    def remove_first_character(param: str) -> str:
+        if len(param) > 1:
+            return param[1:]
         return param

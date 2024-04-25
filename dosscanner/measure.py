@@ -1,3 +1,5 @@
+from urllib import response
+
 import requests
 
 from dosscanner.model import Endpoint, MeasurementException
@@ -5,11 +7,12 @@ from dosscanner.statistics import (
     arithmetic_mean,
     geometric_mean,
     harmonic_mean,
+    median,
     quadratic_mean,
 )
 
 
-def measure_endpoint(endpoint: Endpoint, count: int = 5, algorithm="arithmetic") -> int:
+def measure_endpoint(endpoint: Endpoint, count: int = 5, algorithm="median") -> int:
     """Measures the response time for a specific endpoint by sending multiple requests and calculating a mean response time values from them
 
     Args:
@@ -35,6 +38,8 @@ def measure_endpoint(endpoint: Endpoint, count: int = 5, algorithm="arithmetic")
         measurement = harmonic_mean(response_times)
     elif algorithm == "quadratic":
         measurement = quadratic_mean(response_times)
+    elif algorithm == "median":
+        measurement = median(response_times)
     else:
         raise NotImplementedError(f"Algorithm {algorithm} not implemented!")
 

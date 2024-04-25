@@ -76,3 +76,15 @@ def quadratic_mean(numbers: list) -> int:
         float: Calculated mean value
     """
     return int(math.sqrt((sum([n**2 for n in numbers]) / len(numbers))))
+
+
+def median(numbers: list) -> int:
+    """Calculates median from list of numbers
+
+    Args:
+        numbers (list): List from which median is calculated
+
+    Returns:
+        int: Calculated median value
+    """
+    return np.median(numbers)
