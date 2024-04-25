@@ -1,7 +1,14 @@
 import argparse
+from urllib.parse import urlparse
 
-from dosscanner import DoSScanner, Logger, Requestor, WordlistMutator, create_report
-from dosscanner.logger import LogLevel
+from dosscanner import (
+    DoSScanner,
+    EndpointCrawler,
+    Logger,
+    Requestor,
+    WordlistMutator,
+    create_report,
+)
 from dosscanner.model import Endpoint
 from dosscanner.mutation.genetic_mutator import GeneticMutator
 
@@ -68,6 +75,13 @@ def cmdline_args():
         type=int,
         default=5,
         help="Maximum crawl depth. (Default: %(default)d)",
+    )
+    general_args_genetic.add_argument(
+        "-L",
+        "--endpoint-list",
+        dest="endpoint_list",
+        required=False,
+        help="Path to file containing line seperated list of HTTP GET endpoints of target. If specified, crawler step is skipped",
     )
     general_args_genetic.add_argument(
         "-r",
@@ -143,6 +157,13 @@ def cmdline_args():
         type=int,
         default=5,
         help="Maximum crawl depth. (Default: %(default)d)",
+    )
+    general_args_wordlist.add_argument(
+        "-L",
+        "--endpoint-list",
+        dest="endpoint_list",
+        required=False,
+        help="Path to file containing line seperated list of HTTP GET endpoints of target. If specified, crawler step is skipped",
     )
     general_args_wordlist.add_argument(
         "-r",
@@ -235,9 +256,25 @@ def main(args):
     else:
         Logger.trace("Connectivity test to target server succeeded!")
 
+    # Check if endpoints are supplied via file list or if a crawler is necessary
+    if args.endpoint_list:
+        with open(args.endpoint_list, "r") as f:
+            endpoint_list = [line.strip() for line in f.readlines()]
+        crawler = None
+    else:
+        crawler = EndpointCrawler(
+            start_url=Endpoint(url=args.target, http_method="GET"),
+            allowed_domains=[urlparse(args.target).netloc],
+            max_crawl_depth=args.crawl_depth,
+        )
+        endpoint_list = None
+
     # Create scanner and start it
     scanner = DoSScanner(
-        target=args.target, mutator=mutator, crawl_depth=args.crawl_depth
+        target=args.target,
+        mutator=mutator,
+        crawler=crawler,
+        endpoint_list=endpoint_list,
     )
     vulnerable_endpoints, all_endpoints = scanner.scan_target()
 

@@ -32,7 +32,9 @@ The following command line arguments can be configured regardless of the chosen 
 -c CRAWL_DEPTH, --crawl-depth CRAWL_DEPTH
                     Maximum crawl depth. (Default: 5)
 -r RATE_LIMIT, --rate-limit RATE_LIMIT
-                    Rate limit specified in requests per second. (Default: 10000)
+                    Rate limit specified in requests per second. (Default: 200)
+-L ENDPOINT_LIST, --endpoint-list ENDPOINT_LIST
+                    Path to file containing line seperated list of HTTP GET endpoints of target. If specified, crawler step is skipped
 -H HEADERS [HEADERS ...], --headers HEADERS [HEADERS ...]
                     Additionaly headers included in every request (Multiple headers: -H "Header1: Value1" "Header2: Value2")
 -n, --no-cert-validation

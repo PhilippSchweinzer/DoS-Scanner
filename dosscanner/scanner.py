@@ -10,10 +10,17 @@ from dosscanner.statistics import coefficient_of_variation
 
 
 class DoSScanner:
-    def __init__(self, target: str, mutator: Mutator, crawl_depth: int) -> None:
+    def __init__(
+        self,
+        target: str,
+        mutator: Mutator,
+        crawler: EndpointCrawler,
+        endpoint_list: list[str],
+    ) -> None:
         self.target = target
         self.mutator = mutator
-        self.crawl_depth = crawl_depth
+        self.crawler = crawler
+        self.endpoint_list = endpoint_list
 
     def scan_target(self) -> tuple[list[MeasuredEndpoint], list[Endpoint]]:
         """Scans target for denial of service vulnerabilities
@@ -22,14 +29,16 @@ class DoSScanner:
             tuple[list[MeasuredEndpoint], list[Endpoint]]: Result of scan
         """
 
-        # Get a list of endpoints by crawling the target
-        Logger.info("Crawler started")
-        crawler = EndpointCrawler(
-            start_url=Endpoint(url=self.target, http_method="GET"),
-            allowed_domains=[urlparse(self.target).netloc],
-            max_crawl_depth=self.crawl_depth,
-        )
-        endpoints = crawler.crawl()
+        # Check which way endpoints are provided and read them
+        if self.crawler is not None:
+            Logger.info("Crawler started")
+            endpoints = self.crawler.crawl()
+        else:
+            Logger.info("Endpoints read from supplied file")
+            endpoints = [
+                Endpoint(url=endpoint, http_method="GET")
+                for endpoint in self.endpoint_list
+            ]
         Logger.debug(f"{len(endpoints)} unique endpoints were found by the crawler")
         Logger.trace(f"All endpoints: {endpoints}")
 

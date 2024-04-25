@@ -1,3 +1,4 @@
+from dosscanner.crawl import EndpointCrawler
 from dosscanner.logger import Logger
 from dosscanner.model import Endpoint, MeasuredEndpoint
 from dosscanner.mutation import GeneticMutator, WordlistMutator
@@ -14,4 +15,5 @@ __all__ = [
     "Endpoint",
     "create_report",
     "Requestor",
+    "EndpointCrawler",
 ]
